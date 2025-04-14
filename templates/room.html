@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="content">
+  <div class="message-box">
+    <div class="title-bar" style="position: relative;">
+      <h2>Welcome To The Chat Room</h2>
+      <span style="
+        position: absolute;
+        bottom: 5px;
+        right: 15px;
+        font-size: 14px;
+        font-weight: 700;
+        color: #f0e6dd;
+      ">
+        Room Code: {{ code }}
+      </span>
+    </div>
+
+    <div class="messages" id="messages"></div>
+
+    <div class="inputs">
+      <input type="text"
+        placeholder="Type your message..."
+        name="message"
+        id="message"
+        class="input-message"
+      >
+      <button type="button" name="send" id="send-btn" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  var socketio = io();
+
+  const messages = document.getElementById("messages");
+  const messageInput = document.getElementById("message");
+  const createMessages = (name, msg) => {
+    const content = `
+      <div class="text">
+        <span><strong>${name}</strong>: ${msg}</span>
+        <span class="muted">${new Date().toLocaleString()}</span>
+      </div>
+    `;
+    messages.innerHTML += content;
+    messages.scrollTop = messages.scrollHeight;
+  };
+
+  socketio.on("message", (data) => {
+    createMessages(data.name, data.message);
+  });
+
+  const sendMessage = () => {
+    if (messageInput.value.trim() === "") return;
+    socketio.emit("message", { data: messageInput.value });
+    messageInput.value = "";
+  };
+
+  messageInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+</script>
+
+{% for msg in messages %}
+<script>
+  createMessages("{{msg.name}}", "{{msg.message}}");
+</script>
+{% endfor %}
+{% endblock %}
